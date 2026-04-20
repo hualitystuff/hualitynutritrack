@@ -127,6 +127,19 @@
     .macro-input-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
     .macro-calc-input { width: 80px; }
     .macro-kcal-hint { font-size: 10px; color: var(--muted); }
+    .goal-cal-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .goal-cal-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .goal-cal-val { font-size: 15px; font-weight: 700; }
+    .macro-compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+    .macro-compare-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 12px; }
+    .mc-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+    .mc-vals { display: flex; align-items: baseline; gap: 3px; margin-bottom: 8px; }
+    .mc-eaten { font-size: 16px; font-weight: 700; }
+    .mc-sep { font-size: 12px; color: var(--muted); }
+    .mc-goal { font-size: 12px; color: var(--muted); }
+    .mc-bar-bg { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+    .mc-bar-fill { height: 100%; border-radius: 3px; width: 0%; transition: width 0.5s ease; }
+    .mc-remain { font-size: 10px; color: var(--muted); }
     .serving-selector { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--r); padding: 16px; margin-bottom: 12px; }
     .serving-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
     .serving-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
@@ -145,6 +158,8 @@
   <div class="screens">
     <div class="screen active" id="screen-log">
       <div class="header"><h1>Today</h1><span id="today-date"></span></div>
+
+      <!-- Calorie ring + remaining -->
       <div class="summary-card">
         <div class="ring-wrap">
           <svg viewBox="0 0 90 90">
@@ -153,13 +168,50 @@
           </svg>
           <div class="ring-center"><div class="ring-cal" id="ring-cal-num">0</div><div class="ring-sub">kcal</div></div>
         </div>
-        <div class="macro-bars">
-          <div class="macro-row"><div class="macro-label">Protein</div><div class="macro-bar-bg"><div class="macro-bar-fill" id="bar-protein" style="width:0%;background:#4ade80"></div></div><div class="macro-val" id="val-protein" style="color:#4ade80">0g</div></div>
-          <div class="macro-row"><div class="macro-label">Carbs</div><div class="macro-bar-bg"><div class="macro-bar-fill" id="bar-carbs" style="width:0%;background:#22d3ee"></div></div><div class="macro-val" id="val-carbs" style="color:#22d3ee">0g</div></div>
-          <div class="macro-row"><div class="macro-label">Fat</div><div class="macro-bar-bg"><div class="macro-bar-fill" id="bar-fat" style="width:0%;background:#f59e0b"></div></div><div class="macro-val" id="val-fat" style="color:#f59e0b">0g</div></div>
-          <div class="macro-row"><div class="macro-label">Fiber</div><div class="macro-bar-bg"><div class="macro-bar-fill" id="bar-fiber" style="width:0%;background:#a78bfa"></div></div><div class="macro-val" id="val-fiber" style="color:#a78bfa">0g</div></div>
+        <div style="flex:1">
+          <div class="goal-cal-row">
+            <span class="goal-cal-label">Goal</span>
+            <span class="goal-cal-val" id="goal-cal-display">—</span>
+          </div>
+          <div class="goal-cal-row">
+            <span class="goal-cal-label">Eaten</span>
+            <span class="goal-cal-val" id="eaten-cal-display" style="color:var(--accent)">0</span>
+          </div>
+          <div class="goal-cal-row">
+            <span class="goal-cal-label">Remaining</span>
+            <span class="goal-cal-val" id="remaining-cal-display">—</span>
+          </div>
         </div>
       </div>
+
+      <!-- Macro comparison cards -->
+      <div class="macro-compare-grid">
+        <div class="macro-compare-card">
+          <div class="mc-label" style="color:#4ade80">Protein</div>
+          <div class="mc-vals"><span class="mc-eaten" id="mc-protein-eaten">0g</span><span class="mc-sep">/</span><span class="mc-goal" id="mc-protein-goal">—</span></div>
+          <div class="mc-bar-bg"><div class="mc-bar-fill" id="mc-bar-protein" style="background:#4ade80"></div></div>
+          <div class="mc-remain" id="mc-protein-remain"></div>
+        </div>
+        <div class="macro-compare-card">
+          <div class="mc-label" style="color:#22d3ee">Carbs</div>
+          <div class="mc-vals"><span class="mc-eaten" id="mc-carbs-eaten">0g</span><span class="mc-sep">/</span><span class="mc-goal" id="mc-carbs-goal">—</span></div>
+          <div class="mc-bar-bg"><div class="mc-bar-fill" id="mc-bar-carbs" style="background:#22d3ee"></div></div>
+          <div class="mc-remain" id="mc-carbs-remain"></div>
+        </div>
+        <div class="macro-compare-card">
+          <div class="mc-label" style="color:#f59e0b">Fat</div>
+          <div class="mc-vals"><span class="mc-eaten" id="mc-fat-eaten">0g</span><span class="mc-sep">/</span><span class="mc-goal" id="mc-fat-goal">—</span></div>
+          <div class="mc-bar-bg"><div class="mc-bar-fill" id="mc-bar-fat" style="background:#f59e0b"></div></div>
+          <div class="mc-remain" id="mc-fat-remain"></div>
+        </div>
+        <div class="macro-compare-card">
+          <div class="mc-label" style="color:#a78bfa">Fiber</div>
+          <div class="mc-vals"><span class="mc-eaten" id="mc-fiber-eaten">0g</span><span class="mc-sep">/</span><span class="mc-goal" id="mc-fiber-goal">—</span></div>
+          <div class="mc-bar-bg"><div class="mc-bar-fill" id="mc-bar-fiber" style="background:#a78bfa"></div></div>
+          <div class="mc-remain" id="mc-fiber-remain"></div>
+        </div>
+      </div>
+
       <div class="section-label">Food Log</div>
       <div id="log-list"></div>
     </div>
@@ -386,11 +438,41 @@ function renderLog() {
 }
 
 function updateSummary(t) {
-  document.getElementById('ring-cal-num').textContent = Math.round(t.calories);
-  document.getElementById('cal-ring').style.strokeDashoffset = 239-(239*Math.min(t.calories/goals.calories,1));
-  [['protein','#4ade80'],['carbs','#22d3ee'],['fat','#f59e0b'],['fiber','#a78bfa']].forEach(([k])=>{
-    document.getElementById('bar-'+k).style.width = Math.min((t[k]/goals[k])*100,100)+'%';
-    document.getElementById('val-'+k).textContent = Math.round(t[k])+'g';
+  const calEaten = Math.round(t.calories);
+  const calGoal = goals.calories || 0;
+  const calRemain = calGoal - calEaten;
+
+  document.getElementById('ring-cal-num').textContent = calEaten;
+  document.getElementById('cal-ring').style.strokeDashoffset = 239 - (239 * Math.min(t.calories / (calGoal || 2000), 1));
+  document.getElementById('eaten-cal-display').textContent = calEaten + ' kcal';
+  document.getElementById('goal-cal-display').textContent = calGoal ? calGoal + ' kcal' : 'Not set';
+  document.getElementById('remaining-cal-display').textContent = calGoal
+    ? (calRemain >= 0 ? calRemain + ' kcal left' : Math.abs(calRemain) + ' kcal over')
+    : '—';
+  document.getElementById('remaining-cal-display').style.color = calRemain < 0 ? 'var(--danger)' : 'var(--text)';
+
+  const macros = [
+    {key:'protein', eaten:t.protein, goal:goals.protein, color:'#4ade80', unit:'g'},
+    {key:'carbs',   eaten:t.carbs,   goal:goals.carbs,   color:'#22d3ee', unit:'g'},
+    {key:'fat',     eaten:t.fat,     goal:goals.fat,     color:'#f59e0b', unit:'g'},
+    {key:'fiber',   eaten:t.fiber,   goal:goals.fiber,   color:'#a78bfa', unit:'g'},
+  ];
+
+  macros.forEach(m => {
+    const eaten = Math.round(m.eaten);
+    const goal = m.goal || 0;
+    const pct = goal ? Math.min((eaten / goal) * 100, 100) : 0;
+    const remain = goal - eaten;
+    const over = eaten > goal && goal > 0;
+
+    document.getElementById('mc-'+m.key+'-eaten').textContent = eaten + m.unit;
+    document.getElementById('mc-'+m.key+'-goal').textContent = goal ? goal + m.unit : 'No goal';
+    document.getElementById('mc-bar-'+m.key).style.width = pct + '%';
+    document.getElementById('mc-bar-'+m.key).style.background = over ? 'var(--danger)' : m.color;
+    document.getElementById('mc-'+m.key+'-remain').textContent = goal
+      ? (over ? Math.abs(Math.round(remain)) + 'g over' : Math.round(remain) + 'g left')
+      : '';
+    document.getElementById('mc-'+m.key+'-remain').style.color = over ? 'var(--danger)' : 'var(--muted)';
   });
 }
 
