@@ -430,8 +430,24 @@ function handleImageSelect(e) {
     img.src = src;
     img.classList.add('show');
     document.getElementById('scan-area').style.display = 'none';
-    currentImageB64 = src.split(',')[1];
-    analyzeLabel();
+
+    // Compress image before sending
+    const canvas = document.createElement('canvas');
+    const tempImg = new Image();
+    tempImg.onload = () => {
+      const maxSize = 1024;
+      let w = tempImg.width, h = tempImg.height;
+      if (w > maxSize || h > maxSize) {
+        if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+        else { w = Math.round(w * maxSize / h); h = maxSize; }
+      }
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(tempImg, 0, 0, w, h);
+      currentImageB64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+      analyzeLabel();
+    };
+    tempImg.src = src;
   };
   reader.readAsDataURL(file);
 }
