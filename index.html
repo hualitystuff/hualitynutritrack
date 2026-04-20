@@ -431,20 +431,21 @@ function handleImageSelect(e) {
     img.classList.add('show');
     document.getElementById('scan-area').style.display = 'none';
 
-    // Compress image before sending
     const canvas = document.createElement('canvas');
     const tempImg = new Image();
     tempImg.onload = () => {
-      const maxSize = 1024;
+      const maxSize = 800;
       let w = tempImg.width, h = tempImg.height;
-      if (w > maxSize || h > maxSize) {
-        if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
-        else { w = Math.round(w * maxSize / h); h = maxSize; }
-      }
+      if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+      else { w = Math.round(w * maxSize / h); h = maxSize; }
       canvas.width = w;
       canvas.height = h;
       canvas.getContext('2d').drawImage(tempImg, 0, 0, w, h);
-      currentImageB64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+      const compressed = canvas.toDataURL('image/jpeg', 0.6);
+      currentImageB64 = compressed.split(',')[1];
+      // Show size in status for debugging
+      const kb = Math.round(currentImageB64.length * 0.75 / 1024);
+      document.getElementById('status-text').textContent = `Analyzing label... (${kb}KB)`;
       analyzeLabel();
     };
     tempImg.src = src;
