@@ -114,6 +114,17 @@
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     .api-banner { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: var(--rs); padding: 12px 14px; margin-bottom: 16px; font-size: 13px; color: var(--warn); line-height: 1.5; display: none; }
     .api-banner.show { display: block; }
+    .serving-selector { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--r); padding: 16px; margin-bottom: 12px; }
+    .serving-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+    .serving-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .serving-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 300; }
+    .serving-display { text-align: center; }
+    .serving-display #serving-count { font-size: 32px; font-weight: 700; color: var(--accent); display: block; line-height: 1; }
+    .serving-unit { font-size: 12px; color: var(--muted); }
+    .serving-totals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .serving-total-tile { background: var(--surface2); border-radius: 6px; padding: 6px 8px; text-align: center; }
+    .stt-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stt-val { font-size: 13px; font-weight: 700; margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -159,6 +170,18 @@
         <div class="nutrient-grid" id="res-macro-grid"></div>
         <div class="micro-section-label">Micronutrients</div>
         <div id="res-micro-list"></div>
+      </div>
+      <div class="serving-selector" id="serving-selector" style="display:none">
+        <div class="serving-label">How many servings?</div>
+        <div class="serving-controls">
+          <button class="serving-btn" onclick="changeServings(-0.5)">−</button>
+          <div class="serving-display">
+            <span id="serving-count">1</span>
+            <span class="serving-unit">serving</span>
+          </div>
+          <button class="serving-btn" onclick="changeServings(0.5)">+</button>
+        </div>
+        <div class="serving-totals" id="serving-totals"></div>
       </div>
       <button class="btn-primary" id="log-btn" disabled onclick="logCurrentFood()">Log This Food</button>
       <button class="btn-secondary" id="clear-btn" onclick="clearScan()" style="display:none">Clear &amp; Scan Again</button>
@@ -239,8 +262,26 @@ let goals = JSON.parse(localStorage.getItem(GOALS_KEY) || JSON.stringify({
   sodium: 2300, sugar: 50, saturated_fat: 20, cholesterol: 300
 }));
 
-let currentFood = null;
-let currentImageB64 = null;
+let currentServings = 1;
+
+function changeServings(delta) {
+  currentServings = Math.max(0.5, Math.round((currentServings + delta) * 2) / 2);
+  document.getElementById('serving-count').textContent = currentServings;
+  updateServingTotals();
+  // Update log button text
+  document.getElementById('log-btn').textContent = `Log ${currentServings} Serving${currentServings !== 1 ? 's' : ''}`;
+}
+
+function updateServingTotals() {
+  if (!currentFood) return;
+  const m = currentServings;
+  document.getElementById('serving-totals').innerHTML = [
+    {label:'Calories', val: Math.round(currentFood.calories * m), color:'#4ade80'},
+    {label:'Protein', val: Math.round(currentFood.protein * m)+'g', color:'#4ade80'},
+    {label:'Carbs', val: Math.round(currentFood.carbs * m)+'g', color:'#22d3ee'},
+    {label:'Fat', val: Math.round(currentFood.fat * m)+'g', color:'#f59e0b'},
+  ].map(t => `<div class="serving-total-tile"><div class="stt-label">${t.label}</div><div class="stt-val" style="color:${t.color}">${t.val}</div></div>`).join('');
+}
 
 function today() { return new Date().toISOString().split('T')[0]; }
 function getLog(d) { return db[d] || []; }
@@ -432,14 +473,28 @@ function renderResult(f) {
   document.getElementById('result-card').classList.add('show');
   document.getElementById('log-btn').disabled = false;
   document.getElementById('clear-btn').style.display = 'block';
+  // Show serving selector
+  currentServings = 1;
+  document.getElementById('serving-count').textContent = '1';
+  document.getElementById('serving-selector').style.display = 'block';
+  document.getElementById('log-btn').textContent = 'Log 1 Serving';
+  updateServingTotals();
 }
 
 function logCurrentFood() {
   if (!currentFood) return;
   const d=today(), e=getLog(d);
-  e.push({...currentFood, logged_at: new Date().toISOString()});
+  const m = currentServings;
+  const scaled = {};
+  Object.keys(currentFood).forEach(k => {
+    scaled[k] = typeof currentFood[k] === 'number' ? Math.round(currentFood[k] * m * 10) / 10 : currentFood[k];
+  });
+  if (m !== 1) scaled.name = currentFood.name + ' (×' + m + ')';
+  scaled.servings_logged = m;
+  scaled.logged_at = new Date().toISOString();
+  e.push(scaled);
   saveLog(d,e);
-  showToast('✓ '+currentFood.name+' logged!');
+  showToast('✓ '+scaled.name+' logged!');
   clearScan();
   setTimeout(()=>showScreen('log'),700);
 }
@@ -451,7 +506,9 @@ function clearScan() {
   document.getElementById('result-card').classList.remove('show');
   document.getElementById('status-bar').classList.remove('show');
   document.getElementById('scan-area').style.display='';
-  document.getElementById('log-btn').disabled=true;
+  document.getElementById('serving-selector').style.display = 'none';
+  document.getElementById('log-btn').textContent = 'Log This Food';
+  currentServings = 1;
   document.getElementById('clear-btn').style.display='none';
   document.getElementById('img-input').value='';
 }
