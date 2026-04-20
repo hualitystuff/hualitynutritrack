@@ -474,7 +474,8 @@ Return ONLY the JSON. No other text.`;
     currentFood = parsed;
     renderResult(parsed);
   } catch (err) {
-    document.getElementById('status-text').textContent = '⚠️ Error: ' + (err.message || 'Please try again');
+    const errMsg = err.message || 'Unknown error';
+document.getElementById('status-text').innerHTML = '⚠️ Full error:<br>' + errMsg + '<br><br>Status: ' + (response ? response.status : 'no response') + '<br>Key starts with: ' + apiKey.substring(0,10);
     document.getElementById('clear-btn').style.display = 'block';
   }
 }
