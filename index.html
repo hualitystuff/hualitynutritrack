@@ -114,6 +114,19 @@
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     .api-banner { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: var(--rs); padding: 12px 14px; margin-bottom: 16px; font-size: 13px; color: var(--warn); line-height: 1.5; display: none; }
     .api-banner.show { display: block; }
+    .cal-calc-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 20px; margin-bottom: 16px; }
+    .cal-calc-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+    .cal-calc-display { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+    .cal-calc-display span:first-child { font-size: 42px; font-weight: 700; color: var(--accent); line-height: 1; }
+    .cal-calc-unit { font-size: 16px; color: var(--muted); }
+    .cal-calc-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+    .cal-macro-split { margin-top: 4px; }
+    .split-bar-wrap { height: 8px; border-radius: 4px; overflow: hidden; display: flex; margin-bottom: 8px; background: var(--surface2); }
+    .split-seg { height: 100%; transition: width 0.4s ease; }
+    .split-legend { display: flex; gap: 14px; font-size: 11px; }
+    .macro-input-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+    .macro-calc-input { width: 80px; }
+    .macro-kcal-hint { font-size: 10px; color: var(--muted); }
     .serving-selector { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--r); padding: 16px; margin-bottom: 12px; }
     .serving-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
     .serving-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
@@ -194,29 +207,72 @@
 
     <div class="screen" id="screen-settings">
       <div class="header"><h1>Settings</h1></div>
+
+      <!-- Calorie calculator card -->
+      <div class="cal-calc-card">
+        <div class="cal-calc-label">Daily Calorie Goal</div>
+        <div class="cal-calc-display">
+          <span id="calc-calories">0</span>
+          <span class="cal-calc-unit">kcal</span>
+        </div>
+        <div class="cal-calc-sub">Calculated from your macro goals below</div>
+        <div class="cal-macro-split" id="cal-macro-split">
+          <div class="split-bar-wrap">
+            <div class="split-seg" id="split-protein" style="background:#4ade80"></div>
+            <div class="split-seg" id="split-carbs" style="background:#22d3ee"></div>
+            <div class="split-seg" id="split-fat" style="background:#f59e0b"></div>
+          </div>
+          <div class="split-legend">
+            <span style="color:#4ade80">● Protein</span>
+            <span style="color:#22d3ee">● Carbs</span>
+            <span style="color:#f59e0b">● Fat</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-label">Macro Goals</div>
+        <div class="settings-row">
+          <label>Protein (g)</label>
+          <div class="macro-input-wrap">
+            <input class="settings-input macro-calc-input" id="goal-protein" type="number" min="0" max="500" placeholder="0" oninput="recalcCalories()">
+            <span class="macro-kcal-hint" id="hint-protein">0 kcal</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <label>Carbs (g)</label>
+          <div class="macro-input-wrap">
+            <input class="settings-input macro-calc-input" id="goal-carbs" type="number" min="0" max="1000" placeholder="0" oninput="recalcCalories()">
+            <span class="macro-kcal-hint" id="hint-carbs">0 kcal</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <label>Fat (g)</label>
+          <div class="macro-input-wrap">
+            <input class="settings-input macro-calc-input" id="goal-fat" type="number" min="0" max="500" placeholder="0" oninput="recalcCalories()">
+            <span class="macro-kcal-hint" id="hint-fat">0 kcal</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <label>Fiber (g)</label>
+          <input class="settings-input" id="goal-fiber" type="number" min="0" max="100" placeholder="0">
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-label">Micronutrient Goals</div>
+        <div class="settings-row"><label>Sugar (g)</label><input class="settings-input" id="goal-sugar" type="number" min="0" max="300"></div>
+        <div class="settings-row"><label>Sodium (mg)</label><input class="settings-input" id="goal-sodium" type="number" min="0" max="5000"></div>
+        <div class="settings-row"><label>Saturated Fat (g)</label><input class="settings-input" id="goal-saturated_fat" type="number" min="0" max="100"></div>
+        <div class="settings-row"><label>Cholesterol (mg)</label><input class="settings-input" id="goal-cholesterol" type="number" min="0" max="1000"></div>
+      </div>
+
       <div class="settings-group">
         <div class="settings-label">Anthropic API Key</div>
         <div class="settings-row"><input class="settings-input api-input" id="api-key-input" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false"></div>
         <div class="api-note">Get a free key at <a class="api-link" href="https://platform.anthropic.com" target="_blank">platform.anthropic.com</a>. Stored only on this device.</div>
       </div>
-      <div class="settings-group">
-        <div class="settings-label">Daily Calorie Goal</div>
-        <div class="settings-row"><label>Calories (kcal)</label><input class="settings-input" data-key="calories" type="number" min="0"></div>
-      </div>
-      <div class="settings-group">
-        <div class="settings-label">Macro Goals</div>
-        <div class="settings-row"><label>Protein (g)</label><input class="settings-input" data-key="protein" type="number" min="0"></div>
-        <div class="settings-row"><label>Carbs (g)</label><input class="settings-input" data-key="carbs" type="number" min="0"></div>
-        <div class="settings-row"><label>Fat (g)</label><input class="settings-input" data-key="fat" type="number" min="0"></div>
-        <div class="settings-row"><label>Fiber (g)</label><input class="settings-input" data-key="fiber" type="number" min="0"></div>
-      </div>
-      <div class="settings-group">
-        <div class="settings-label">Micro Goals</div>
-        <div class="settings-row"><label>Sugar (g)</label><input class="settings-input" data-key="sugar" type="number" min="0"></div>
-        <div class="settings-row"><label>Sodium (mg)</label><input class="settings-input" data-key="sodium" type="number" min="0"></div>
-        <div class="settings-row"><label>Saturated Fat (g)</label><input class="settings-input" data-key="saturated_fat" type="number" min="0"></div>
-        <div class="settings-row"><label>Cholesterol (mg)</label><input class="settings-input" data-key="cholesterol" type="number" min="0"></div>
-      </div>
+
       <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
     </div>
   </div>
@@ -552,18 +608,60 @@ function renderInsights() {
     </div>`;
 }
 
+function recalcCalories() {
+  const p = parseFloat(document.getElementById('goal-protein').value) || 0;
+  const c = parseFloat(document.getElementById('goal-carbs').value) || 0;
+  const f = parseFloat(document.getElementById('goal-fat').value) || 0;
+  const pCal = Math.round(p * 4);
+  const cCal = Math.round(c * 4);
+  const fCal = Math.round(f * 9);
+  const total = pCal + cCal + fCal;
+  document.getElementById('calc-calories').textContent = total;
+  document.getElementById('hint-protein').textContent = pCal + ' kcal';
+  document.getElementById('hint-carbs').textContent = cCal + ' kcal';
+  document.getElementById('hint-fat').textContent = fCal + ' kcal';
+  // Update split bar
+  if (total > 0) {
+    document.getElementById('split-protein').style.width = (pCal/total*100)+'%';
+    document.getElementById('split-carbs').style.width = (cCal/total*100)+'%';
+    document.getElementById('split-fat').style.width = (fCal/total*100)+'%';
+  } else {
+    ['split-protein','split-carbs','split-fat'].forEach(id => document.getElementById(id).style.width='0%');
+  }
+}
+
 function renderSettings() {
-  const saved=localStorage.getItem(API_KEY_STORE);
-  if (saved) document.getElementById('api-key-input').value=saved;
-  document.querySelectorAll('[data-key]').forEach(i=>{i.value=goals[i.dataset.key]||'';});
+  document.getElementById('goal-protein').value = goals.protein || '';
+  document.getElementById('goal-carbs').value = goals.carbs || '';
+  document.getElementById('goal-fat').value = goals.fat || '';
+  document.getElementById('goal-fiber').value = goals.fiber || '';
+  document.getElementById('goal-sugar').value = goals.sugar || '';
+  document.getElementById('goal-sodium').value = goals.sodium || '';
+  document.getElementById('goal-saturated_fat').value = goals.saturated_fat || '';
+  document.getElementById('goal-cholesterol').value = goals.cholesterol || '';
+  const saved = localStorage.getItem(API_KEY_STORE);
+  if (saved) document.getElementById('api-key-input').value = saved;
+  recalcCalories();
 }
 
 function saveSettings() {
-  const key=document.getElementById('api-key-input').value.trim();
-  if (key) localStorage.setItem(API_KEY_STORE,key);
-  document.querySelectorAll('[data-key]').forEach(i=>{goals[i.dataset.key]=parseFloat(i.value)||0;});
-  localStorage.setItem(GOALS_KEY,JSON.stringify(goals));
-  showToast('Settings saved!');
+  const p = parseFloat(document.getElementById('goal-protein').value) || 0;
+  const c = parseFloat(document.getElementById('goal-carbs').value) || 0;
+  const f = parseFloat(document.getElementById('goal-fat').value) || 0;
+  goals.protein = p;
+  goals.carbs = c;
+  goals.fat = f;
+  goals.fiber = parseFloat(document.getElementById('goal-fiber').value) || 0;
+  goals.sugar = parseFloat(document.getElementById('goal-sugar').value) || 0;
+  goals.sodium = parseFloat(document.getElementById('goal-sodium').value) || 0;
+  goals.saturated_fat = parseFloat(document.getElementById('goal-saturated_fat').value) || 0;
+  goals.cholesterol = parseFloat(document.getElementById('goal-cholesterol').value) || 0;
+  // Calories calculated from macros
+  goals.calories = Math.round(p * 4 + c * 4 + f * 9);
+  localStorage.setItem(GOALS_KEY, JSON.stringify(goals));
+  const key = document.getElementById('api-key-input').value.trim();
+  if (key) localStorage.setItem(API_KEY_STORE, key);
+  showToast('Settings saved! ' + goals.calories + ' kcal goal set');
 }
 
 function showToast(msg) {
